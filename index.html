@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>棋局剧场</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">CHESS STUDIO</p>
+          <h1>棋局剧场</h1>
+          <p class="subtitle">
+            一个带分级难度与逐手复盘的国际象棋练习台。你可以即时对战，也可以赛后回看每一步为何改变局势。
+          </p>
+        </div>
+        <div class="control-strip">
+          <label>
+            模式
+            <select id="mode-select">
+              <option value="ai" selected>人机对战</option>
+              <option value="local">双人对战</option>
+              <option value="remote">远程联机</option>
+            </select>
+          </label>
+          <label>
+            难度
+            <select id="difficulty-select">
+              <option value="beginner">初级</option>
+              <option value="intermediate" selected>中级</option>
+              <option value="expert">高级</option>
+            </select>
+          </label>
+          <button id="restart-btn">重新开局</button>
+          <button id="undo-btn">悔棋</button>
+          <button id="resume-live-btn" class="ghost">回到当前局面</button>
+        </div>
+      </section>
+
+      <main class="board-layout">
+        <section class="board-panel">
+          <section class="remote-panel" id="remote-panel">
+            <div class="remote-head">
+              <div>
+                <span class="label">联机状态</span>
+                <strong id="remote-status-text">未连接</strong>
+              </div>
+              <div>
+                <span class="label">我的执子</span>
+                <strong id="remote-role-text">未分配</strong>
+              </div>
+              <div>
+                <span class="label">房间码</span>
+                <strong id="remote-room-text">-</strong>
+              </div>
+            </div>
+            <div class="remote-actions">
+              <select id="remote-room-type-select">
+                <option value="remote">远程双人</option>
+                <option value="remote-ai">远程人机</option>
+              </select>
+              <input id="room-code-input" type="text" maxlength="6" placeholder="输入房间码" />
+              <button id="create-room-btn">创建房间</button>
+              <button id="join-room-btn" class="ghost">加入房间</button>
+              <button id="copy-room-btn" class="ghost">复制邀请链接</button>
+            </div>
+            <p id="remote-help-text" class="remote-help">创建房间后，把链接发给对方；双方连接后会自动开局。</p>
+          </section>
+          <div class="starter-bar">
+            <div>
+              <span class="label">开局入口</span>
+              <strong id="starter-text">点击“开始游戏”后落子</strong>
+            </div>
+            <button id="start-btn">开始游戏</button>
+          </div>
+          <section class="guide-panel" id="guide-panel">
+            <h2>新手引导</h2>
+            <div class="guide-grid">
+              <p><strong>1.</strong> 先选模式。`人机对战` 默认你执白，AI 执黑；`双人对战` 由两个人轮流点击走子。</p>
+              <p><strong>2.</strong> 点击“开始游戏”，再点一个己方棋子，最后点高亮目标格子完成走子。</p>
+              <p><strong>3.</strong> 右侧 `走子记录` 可逐步回看，`复盘摘要` 会总结关键失误与转折点。</p>
+              <p><strong>4.</strong> `悔棋` 在人机模式会回退一个完整回合，在双人模式会回退上一步。</p>
+            </div>
+          </section>
+          <canvas id="board" width="720" height="720"></canvas>
+          <div class="status-bar">
+            <div>
+              <span class="label">当前状态</span>
+              <strong id="status-text">白方行棋</strong>
+            </div>
+            <div>
+              <span class="label">本局结果</span>
+              <strong id="result-text">进行中</strong>
+            </div>
+            <div>
+              <span class="label">复盘视角</span>
+              <strong id="review-mode-text">实时对局</strong>
+            </div>
+          </div>
+          <div class="legend">
+            <span><i class="swatch selected"></i>已选中</span>
+            <span><i class="swatch move"></i>可走子</span>
+            <span><i class="swatch capture"></i>可吃子</span>
+            <span><i class="swatch check"></i>被将军</span>
+          </div>
+        </section>
+
+        <aside class="side-panel">
+          <section class="card insight-card">
+            <h2>局势解读</h2>
+            <p id="insight-text">
+              选择白方棋子开始对局。系统会在你每一步之后自动记录最佳着法与分数波动，赛后生成复盘结论。
+            </p>
+            <div class="metrics" id="metrics-grid"></div>
+          </section>
+
+          <section class="card">
+            <h2>走子记录</h2>
+            <ol id="move-list" class="move-list"></ol>
+          </section>
+
+          <section class="card">
+            <h2>复盘摘要</h2>
+            <div id="review-summary" class="review-summary">
+              <p>对局结束后，这里会标出关键转折点、最大失误与稳定发挥阶段。</p>
+            </div>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <div id="promotion-modal" class="promotion-modal hidden" aria-hidden="true">
+      <div class="promotion-card">
+        <h3>兵升变</h3>
+        <p>选择要升变的棋子。</p>
+        <div class="promotion-options">
+          <button data-piece="q">后</button>
+          <button data-piece="r">车</button>
+          <button data-piece="b">象</button>
+          <button data-piece="n">马</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
