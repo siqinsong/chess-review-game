@@ -210,6 +210,13 @@ button.ghost {
   background: linear-gradient(135deg, rgba(255, 248, 236, 0.95), rgba(237, 220, 188, 0.72));
 }
 
+.starter-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .guide-panel {
   padding: 16px 18px;
   border-radius: 18px;
@@ -406,6 +413,20 @@ canvas {
 
   .control-strip {
     justify-content: start;
+  }
+
+  .starter-bar {
+    flex-direction: column;
+    align-items: start;
+  }
+
+  .starter-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .starter-actions button {
+    flex: 1 1 180px;
   }
 }
 

@@ -6,6 +6,7 @@ const restartBtn = document.getElementById("restart-btn");
 const undoBtn = document.getElementById("undo-btn");
 const resumeLiveBtn = document.getElementById("resume-live-btn");
 const startBtn = document.getElementById("start-btn");
+const nextPuzzleBtn = document.getElementById("next-puzzle-btn");
 const starterText = document.getElementById("starter-text");
 const remotePanel = document.getElementById("remote-panel");
 const remoteStatusText = document.getElementById("remote-status-text");
@@ -114,6 +115,129 @@ const DIFFICULTIES = {
   expert: { label: "高级", depth: 3, noise: 0, reviewDepth: 2 },
 };
 
+const PUZZLES = [
+  {
+    id: "italian-initiative",
+    title: "意大利开局的先手主动权",
+    description: "白方先走。王都已安置好，适合从轻子活跃度和中央张力继续推演。",
+    board: [
+      ["br", null, "bb", "bq", null, "br", "bk", null],
+      ["bp", "bp", null, null, "bb", "bp", "bp", "bp"],
+      [null, null, "bn", "bp", null, "bn", null, null],
+      [null, null, "bp", null, "wp", null, null, null],
+      [null, null, "wb", null, null, null, null, null],
+      [null, null, "wn", null, null, "wn", null, null],
+      ["wp", "wp", "wp", null, "wq", "wp", "wp", "wp"],
+      ["wr", null, null, null, "wr", null, "wk", null],
+    ],
+    turn: "w",
+    castling: { w: { kingSide: false, queenSide: false }, b: { kingSide: false, queenSide: false } },
+    enPassant: null,
+    halfmove: 2,
+    fullmove: 11,
+  },
+  {
+    id: "minor-piece-squeeze",
+    title: "双马与象的空间压制",
+    description: "黑方先走。双方子力完整度较高，适合练习如何在拥挤局面中找出突破点。",
+    board: [
+      ["br", null, null, "bq", null, "br", "bk", null],
+      ["bp", "bp", null, "bb", null, "bp", "bp", "bp"],
+      [null, null, "bp", "bp", "bn", "bn", null, null],
+      [null, null, null, null, "bp", null, null, null],
+      [null, null, "wp", "wp", "wp", null, null, null],
+      [null, null, "wn", "wb", null, "wn", null, null],
+      ["wp", "wp", null, null, "wq", "wp", "wp", "wp"],
+      ["wr", null, null, null, "wr", null, "wk", null],
+    ],
+    turn: "b",
+    castling: { w: { kingSide: false, queenSide: false }, b: { kingSide: false, queenSide: false } },
+    enPassant: null,
+    halfmove: 0,
+    fullmove: 18,
+  },
+  {
+    id: "queen-endgame-race",
+    title: "后残局抢先手",
+    description: "白方先走。双方都保留一枚后和若干兵，适合练习将军、兑后与通路兵竞速。",
+    board: [
+      [null, null, null, null, null, null, "bk", null],
+      [null, null, null, null, null, "bp", null, "bp"],
+      [null, null, null, null, "bp", null, "bp", null],
+      [null, null, null, "bp", null, null, null, null],
+      [null, null, "wp", null, "wp", null, null, null],
+      [null, null, null, null, null, "wp", "wp", null],
+      [null, null, null, "wq", null, null, null, "wp"],
+      [null, null, null, null, null, null, "wk", null],
+    ],
+    turn: "w",
+    castling: { w: { kingSide: false, queenSide: false }, b: { kingSide: false, queenSide: false } },
+    enPassant: null,
+    halfmove: 1,
+    fullmove: 35,
+  },
+  {
+    id: "rook-endgame-active-king",
+    title: "车残局中的王的激活",
+    description: "黑方先走。双方各有一车，关键在于王的站位和兵形弱点的利用。",
+    board: [
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, "br", null, "bk", null],
+      [null, null, null, "bp", null, "bp", null, "bp"],
+      [null, null, null, null, "bp", null, "bp", null],
+      [null, null, null, "wp", null, null, null, null],
+      [null, null, null, null, "wk", "wp", null, "wp"],
+      [null, null, null, null, "wr", null, null, null],
+      [null, null, null, null, null, null, null, null],
+    ],
+    turn: "b",
+    castling: { w: { kingSide: false, queenSide: false }, b: { kingSide: false, queenSide: false } },
+    enPassant: null,
+    halfmove: 4,
+    fullmove: 42,
+  },
+  {
+    id: "passed-pawn-race",
+    title: "通路兵竞速",
+    description: "白方先走。残局兵形非常直接，适合练习计算谁先升变以及何时该用王拦截。",
+    board: [
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, "bk", null],
+      [null, null, null, null, null, "bp", null, null],
+      [null, null, null, null, "bp", null, null, null],
+      [null, null, null, "wp", null, null, null, null],
+      [null, null, null, null, null, null, "wk", null],
+      [null, null, null, null, null, null, null, "wp"],
+      [null, null, null, null, null, null, null, null],
+    ],
+    turn: "w",
+    castling: { w: { kingSide: false, queenSide: false }, b: { kingSide: false, queenSide: false } },
+    enPassant: null,
+    halfmove: 0,
+    fullmove: 51,
+  },
+  {
+    id: "opposite-colored-bishops",
+    title: "异色象残局",
+    description: "黑方先走。异色象让和棋资源很多，但也容易漏看兵翼的切入点。",
+    board: [
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, "bk", null, null],
+      [null, null, null, "bp", null, null, null, null],
+      [null, null, null, null, "bb", null, "bp", null],
+      [null, null, "wb", null, null, null, null, null],
+      [null, null, null, "wp", null, "wk", null, null],
+      [null, null, null, null, null, null, "wp", null],
+      [null, null, null, null, null, null, null, null],
+    ],
+    turn: "b",
+    castling: { w: { kingSide: false, queenSide: false }, b: { kingSide: false, queenSide: false } },
+    enPassant: null,
+    halfmove: 7,
+    fullmove: 46,
+  },
+];
+
 const state = {
   game: null,
   selected: null,
@@ -124,6 +248,11 @@ const state = {
   difficulty: "intermediate",
   mode: "ai",
   hasStarted: false,
+  puzzle: {
+    currentId: "",
+    title: "",
+    description: "",
+  },
   remote: {
     socket: null,
     status: "未连接",
@@ -192,6 +321,21 @@ function createInitialGame() {
   };
 }
 
+function createPuzzleGame(puzzle) {
+  return {
+    ...createInitialGame(),
+    board: cloneBoard(puzzle.board),
+    turn: puzzle.turn,
+    castling: {
+      w: { ...puzzle.castling.w },
+      b: { ...puzzle.castling.b },
+    },
+    enPassant: puzzle.enPassant ? { ...puzzle.enPassant } : null,
+    halfmove: puzzle.halfmove ?? 0,
+    fullmove: puzzle.fullmove ?? 1,
+  };
+}
+
 function createInitialRemoteMatchState() {
   return {
     game: createInitialGame(),
@@ -235,6 +379,32 @@ function algebraicSquare(row, col) {
 
 function cloneBoard(board) {
   return board.map((row) => [...row]);
+}
+
+function getPuzzleById(id) {
+  return PUZZLES.find((item) => item.id === id) || null;
+}
+
+function pickRandomPuzzle(excludeId = "") {
+  const pool = PUZZLES.filter((item) => item.id !== excludeId);
+  const source = pool.length ? pool : PUZZLES;
+  return source[Math.floor(Math.random() * source.length)];
+}
+
+function applyPuzzle(puzzle, hasStarted = false) {
+  state.puzzle = {
+    currentId: puzzle.id,
+    title: puzzle.title,
+    description: puzzle.description,
+  };
+  state.game = createPuzzleGame(puzzle);
+  state.selected = null;
+  state.legalTargets = [];
+  state.reviewIndex = null;
+  state.pendingPromotion = null;
+  state.aiThinking = false;
+  state.hasStarted = hasStarted;
+  updateUI();
 }
 
 function mirrorRow(row) {
@@ -760,9 +930,9 @@ function recordMove(gameBefore, move, side, choiceData, playedScore, gameAfter) 
     reviewText:
       state.mode === "ai" && side === "b"
         ? `AI 选择 ${moveToNotation(gameBefore, resolvedMove)}，当前难度为${DIFFICULTIES[state.difficulty].label}。`
-        : side === "w"
-        ? `你走出 ${moveToNotation(gameBefore, resolvedMove)}，局面评估从最佳线偏离 ${Math.max(0, swing).toFixed(0)} 分，判定为${classifySwing(swing, side)}。`
-        : `黑方走出 ${moveToNotation(gameBefore, resolvedMove)}，局面评估偏离最佳线 ${Math.max(0, swing).toFixed(0)} 分，判定为${classifySwing(swing, side)}。`,
+        : state.mode === "ai" && side === "w"
+          ? `你走出 ${moveToNotation(gameBefore, resolvedMove)}，局面评估从最佳线偏离 ${Math.max(0, swing).toFixed(0)} 分，判定为${classifySwing(swing, side)}。`
+          : `${side === "w" ? "白方" : "黑方"}走出 ${moveToNotation(gameBefore, resolvedMove)}，局面评估偏离最佳线 ${Math.max(0, swing).toFixed(0)} 分，判定为${classifySwing(swing, side)}。`,
     snapshot: snapshot(gameAfter),
   };
 }
@@ -774,9 +944,10 @@ function createMetrics() {
   const inaccuracies = playerMoves.filter((item) => item.quality === "轻微失准").length;
   const mistakes = playerMoves.filter((item) => item.quality === "失误").length;
   const stable = aiMoves.length ? formatEval(aiMoves.at(-1).playedEval) : formatEval(evaluateBoard(state.game.board));
+  const whiteLabel = state.mode === "ai" ? "你的" : "白方";
   return [
-    { label: "你的致命失误", value: String(severe) },
-    { label: "你的失误", value: String(mistakes + inaccuracies) },
+    { label: `${whiteLabel}致命失误`, value: String(severe) },
+    { label: `${whiteLabel}失误`, value: String(mistakes + inaccuracies) },
     { label: "当前评估", value: stable },
     { label: "已走回合", value: String(Math.ceil(state.game.history.length / 2)) },
   ];
@@ -807,7 +978,8 @@ function buildReviewSummary() {
   const biggest = sorted[0];
   const best = [...playerMoves].filter((item) => item.quality === "最佳/近似最佳").length;
   const summary = [];
-  summary.push(`<p>你的 ${playerMoves.length} 步里有 ${best} 步保持在最佳线附近。</p>`);
+  const whiteLabel = state.mode === "ai" ? "你" : "白方";
+  summary.push(`<p>${whiteLabel}的 ${playerMoves.length} 步里有 ${best} 步保持在最佳线附近。</p>`);
   if (biggest) {
     summary.push(
       `<p>最大转折出现在第 ${Math.ceil(biggest.ply / 2)} 回合的 <strong>${biggest.notation}</strong>，相较最佳着法 <strong>${biggest.bestMove}</strong> 偏离 ${Math.max(0, biggest.swing).toFixed(0)} 分。</p>`,
@@ -847,7 +1019,9 @@ function describeStatus() {
       }
       return state.remote.players.w && state.remote.players.b ? "双方已就绪，等待同步开局" : "等待双方加入房间";
     }
-    return state.mode === "ai" ? "等待开始，人机模式由白方先走" : "等待开始，双人轮流落子";
+    if (state.mode === "ai") return "等待开始，人机模式由白方先走";
+    if (state.mode === "puzzle") return `等待开始，当前题面为「${state.puzzle.title}」`;
+    return "等待开始，双人轮流落子";
   }
   if (state.mode === "remote" && state.remote.roomType !== "remote-ai" && (!state.remote.players.w || !state.remote.players.b)) return "对手未连接";
   if (game.status === "checkmate") {
@@ -857,6 +1031,7 @@ function describeStatus() {
   if (game.status === "stalemate") return "和棋：逼和";
   if (game.status === "draw") return `和棋：${game.reason}`;
   if (state.aiThinking) return "AI 思考中";
+  if (state.mode === "puzzle") return `${currentSideLabel()}续下`;
   return state.mode === "ai" && game.turn === "b" ? "AI 行棋" : `${currentSideLabel()}行棋`;
 }
 
@@ -892,11 +1067,15 @@ function updateInsightText() {
         ? "当前是人机模式。点击“开始游戏”后，你执白先走，AI 会在你每一步之后自动应手。"
         : state.mode === "local"
           ? "当前是双人模式。点击“开始游戏”后，双方轮流在同一棋盘上点击走子，系统同样会记录并复盘每一步。"
+          : state.mode === "puzzle"
+            ? `当前是 Puzzle 续下模式。题面「${state.puzzle.title}」已加载：${state.puzzle.description}`
           : "当前是远程联机模式。你可以创建远程双人房，或者直接创建远程人机房，在另一台设备上继续和 AI 对战。";
     return;
   }
   insightText.textContent =
-    "选择白方棋子开始对局。系统会在你每一步之后自动记录最佳着法与分数波动，赛后生成复盘结论。";
+    state.mode === "puzzle"
+      ? `正在续下题面「${state.puzzle.title}」。${state.puzzle.description}`
+      : "选择白方棋子开始对局。系统会在你每一步之后自动记录最佳着法与分数波动，赛后生成复盘结论。";
 }
 
 function updateUI() {
@@ -910,20 +1089,30 @@ function updateUI() {
       ? "对局已开始，你执白，AI 执黑"
       : state.mode === "local"
         ? "对局已开始，白黑双方轮流点击走子"
+        : state.mode === "puzzle"
+          ? `续下中：${state.puzzle.title}`
         : "联机对局已开始，双方共享同一棋盘与复盘"
     : state.mode === "remote"
       ? state.remote.roomType === "remote-ai"
         ? "创建远程人机房后会立刻开局，你执白对阵服务端 AI"
         : "先创建或加入房间，双方到齐后自动开局"
+      : state.mode === "puzzle"
+        ? `当前题面：${state.puzzle.title}`
       : "点击“开始游戏”后落子";
   startBtn.textContent =
     state.mode === "remote"
       ? state.hasStarted
         ? "重新开始联机对局"
         : "等待房间就绪"
+      : state.mode === "puzzle"
+        ? state.hasStarted
+          ? "重开当前题面"
+          : "开始这盘续下"
       : state.hasStarted
         ? "重新开始当前模式"
         : "开始游戏";
+  nextPuzzleBtn.style.display = state.mode === "puzzle" ? "inline-flex" : "none";
+  nextPuzzleBtn.disabled = state.mode !== "puzzle";
   startBtn.disabled =
     state.mode === "remote" &&
     (
@@ -935,7 +1124,7 @@ function updateUI() {
   guidePanel.style.display = state.hasStarted || state.mode === "remote" ? "none" : "block";
   remotePanel.style.display = state.mode === "remote" ? "block" : "none";
   difficultySelect.disabled =
-    state.mode === "local" || (state.mode === "remote" && Boolean(state.remote.roomCode));
+    state.mode === "local" || state.mode === "puzzle" || (state.mode === "remote" && Boolean(state.remote.roomCode));
   undoBtn.disabled = state.mode === "remote";
   remoteStatusText.textContent = state.remote.status;
   remoteRoleText.textContent =
@@ -1135,6 +1324,11 @@ async function handleBoardClick(event) {
 }
 
 function resetGame() {
+  if (state.mode === "puzzle") {
+    const puzzle = getPuzzleById(state.puzzle.currentId) || pickRandomPuzzle();
+    applyPuzzle(puzzle, false);
+    return;
+  }
   state.game = createInitialGame();
   state.selected = null;
   state.legalTargets = [];
@@ -1142,6 +1336,11 @@ function resetGame() {
   state.pendingPromotion = null;
   state.aiThinking = false;
   state.hasStarted = false;
+  state.puzzle = {
+    currentId: "",
+    title: "",
+    description: "",
+  };
   updateUI();
 }
 
@@ -1152,6 +1351,16 @@ function startGame() {
     }
     return;
   }
+  if (state.mode === "puzzle") {
+    if (state.hasStarted) {
+      const puzzle = getPuzzleById(state.puzzle.currentId) || pickRandomPuzzle();
+      applyPuzzle(puzzle, true);
+      return;
+    }
+    state.hasStarted = true;
+    updateUI();
+    return;
+  }
   resetGame();
   state.hasStarted = true;
   updateUI();
@@ -1159,7 +1368,10 @@ function startGame() {
 
 function restoreSnapshot(entryHistory) {
   if (!entryHistory.length) {
-    state.game = createInitialGame();
+    state.game =
+      state.mode === "puzzle"
+        ? createPuzzleGame(getPuzzleById(state.puzzle.currentId) || pickRandomPuzzle())
+        : createInitialGame();
     return;
   }
   const snap = entryHistory.at(-1).snapshot;
@@ -1359,10 +1571,14 @@ async function autoJoinFromUrl() {
   const mode = params.get("mode");
   const room = params.get("room");
   const roomType = params.get("roomType");
-  if (mode === "remote") {
-    state.mode = "remote";
-    modeSelect.value = "remote";
-    updateUI();
+  if (["ai", "local", "puzzle", "remote"].includes(mode)) {
+    state.mode = mode;
+    modeSelect.value = mode;
+    if (mode === "puzzle") {
+      applyPuzzle(pickRandomPuzzle(state.puzzle.currentId), false);
+    } else {
+      updateUI();
+    }
   }
   if (roomType === "remote-ai" || roomType === "remote") {
     remoteRoomTypeSelect.value = roomType;
@@ -1390,7 +1606,7 @@ function installPromotionHandlers() {
 restartBtn.addEventListener("click", resetGame);
 undoBtn.addEventListener("click", () => {
   if (!state.game.history.length || state.aiThinking) return;
-  const rollback = state.mode === "local" ? 1 : state.game.turn === "b" ? 1 : 2;
+  const rollback = state.mode === "local" || state.mode === "puzzle" ? 1 : state.game.turn === "b" ? 1 : 2;
   const history = state.game.history.slice(0, Math.max(0, state.game.history.length - rollback));
   restoreSnapshot(history);
   state.reviewIndex = null;
@@ -1399,6 +1615,10 @@ undoBtn.addEventListener("click", () => {
   updateUI();
 });
 startBtn.addEventListener("click", startGame);
+nextPuzzleBtn.addEventListener("click", () => {
+  if (state.mode !== "puzzle") return;
+  applyPuzzle(pickRandomPuzzle(state.puzzle.currentId), state.hasStarted);
+});
 createRoomBtn.addEventListener("click", createRoom);
 joinRoomBtn.addEventListener("click", joinRoom);
 copyRoomBtn.addEventListener("click", copyInviteLink);
@@ -1419,6 +1639,10 @@ shareBaseUrlInput.addEventListener("change", () => {
 modeSelect.addEventListener("change", (event) => {
   if (state.mode === "remote" && event.target.value !== "remote") resetRemoteState();
   state.mode = event.target.value;
+  if (state.mode === "puzzle") {
+    applyPuzzle(pickRandomPuzzle(state.puzzle.currentId), false);
+    return;
+  }
   resetGame();
 });
 canvas.addEventListener("click", handleBoardClick);
@@ -1434,6 +1658,7 @@ window.render_game_to_text = () => {
     winner: state.game.winner,
     mode: state.mode,
     hasStarted: state.hasStarted,
+    puzzle: state.puzzle,
     remote: {
       roomCode: state.remote.roomCode,
       roomType: state.remote.roomType,

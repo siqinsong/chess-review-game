@@ -22,6 +22,7 @@
             <select id="mode-select">
               <option value="ai" selected>人机对战</option>
               <option value="local">双人对战</option>
+              <option value="puzzle">Puzzle 续下</option>
               <option value="remote">远程联机</option>
             </select>
           </label>
@@ -82,7 +83,10 @@
               <span class="label">开局入口</span>
               <strong id="starter-text">点击“开始游戏”后落子</strong>
             </div>
-            <button id="start-btn">开始游戏</button>
+            <div class="starter-actions">
+              <button id="next-puzzle-btn" class="ghost">换一题</button>
+              <button id="start-btn">开始游戏</button>
+            </div>
           </div>
           <section class="guide-panel" id="guide-panel">
             <h2>新手引导</h2>
@@ -90,7 +94,7 @@
               <p><strong>1.</strong> 先选模式。`人机对战` 默认你执白，AI 执黑；`双人对战` 由两个人轮流点击走子。</p>
               <p><strong>2.</strong> 点击“开始游戏”，再点一个己方棋子，最后点高亮目标格子完成走子。</p>
               <p><strong>3.</strong> 右侧 `走子记录` 可逐步回看，`复盘摘要` 会总结关键失误与转折点。</p>
-              <p><strong>4.</strong> `悔棋` 在人机模式会回退一个完整回合，在双人模式会回退上一步。</p>
+              <p><strong>4.</strong> `Puzzle 续下` 会随机给出中残局，让你从当前轮次继续推演；点击 `换一题` 可立刻切换题面。</p>
             </div>
           </section>
           <canvas id="board" width="720" height="720"></canvas>
