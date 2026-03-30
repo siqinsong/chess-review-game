@@ -17,6 +17,7 @@ const roomCodeInput = document.getElementById("room-code-input");
 const createRoomBtn = document.getElementById("create-room-btn");
 const joinRoomBtn = document.getElementById("join-room-btn");
 const copyRoomBtn = document.getElementById("copy-room-btn");
+const shareBaseUrlInput = document.getElementById("share-base-url-input");
 const statusText = document.getElementById("status-text");
 const resultText = document.getElementById("result-text");
 const reviewModeText = document.getElementById("review-mode-text");
@@ -128,6 +129,7 @@ const state = {
     status: "未连接",
     roomCode: "",
     roomType: "remote",
+    shareBaseUrl: "",
     playerColor: null,
     players: { w: false, b: false },
     error: "",
@@ -136,6 +138,29 @@ const state = {
 
 function deepClone(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+function isLoopbackUrl(value) {
+  try {
+    const url = new URL(value);
+    return ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function normalizeBaseUrl(value) {
+  const text = value.trim();
+  if (!text) return "";
+  try {
+    const url = new URL(text.includes("://") ? text : `http://${text}`);
+    url.pathname = "/";
+    url.search = "";
+    url.hash = "";
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return "";
+  }
 }
 
 function createInitialGame() {
@@ -909,17 +934,22 @@ function updateUI() {
     );
   guidePanel.style.display = state.hasStarted || state.mode === "remote" ? "none" : "block";
   remotePanel.style.display = state.mode === "remote" ? "block" : "none";
-  difficultySelect.disabled = state.mode === "local" || state.mode === "remote";
+  difficultySelect.disabled =
+    state.mode === "local" || (state.mode === "remote" && Boolean(state.remote.roomCode));
   undoBtn.disabled = state.mode === "remote";
   remoteStatusText.textContent = state.remote.status;
   remoteRoleText.textContent =
     state.remote.playerColor === "w" ? "白方" : state.remote.playerColor === "b" ? "黑方" : state.remote.roomType === "remote-ai" ? "白方" : "未分配";
   remoteRoomText.textContent = state.remote.roomCode || "-";
+  if (document.activeElement !== shareBaseUrlInput) {
+    shareBaseUrlInput.value = resolveShareBaseUrl();
+  }
+  const shareTarget = resolveShareBaseUrl();
   remoteHelpText.textContent =
     state.remote.error ||
     (state.remote.roomType === "remote-ai"
-      ? "远程人机房会在创建后立刻开局，服务端 AI 自动执黑。"
-      : "创建房间后，把链接发给对方；双方连接后会自动开局。");
+      ? `远程人机适合另一台电脑单独打开这个地址后自己建房。当前分享地址：${shareTarget || "请先填写可访问地址"}`
+      : `远程双人请把邀请链接发给对方。如果你当前是本机地址，请先改成局域网 IP 或公网地址。当前分享地址：${shareTarget || "请先填写可访问地址"}`);
   updateInsightText();
   updateMetrics();
   updateMoveList();
@@ -1155,6 +1185,35 @@ function getSocketUrl() {
   return `${protocol}//${window.location.host}`;
 }
 
+function resolveShareBaseUrl() {
+  const manual = normalizeBaseUrl(shareBaseUrlInput.value);
+  if (manual) return manual;
+  const fallback = normalizeBaseUrl(state.remote.shareBaseUrl || window.location.origin);
+  return fallback;
+}
+
+async function loadServerInfo() {
+  try {
+    const response = await fetch("/api/server-info");
+    if (!response.ok) return;
+    const payload = await response.json();
+    const suggested =
+      isLoopbackUrl(window.location.origin) && Array.isArray(payload.lanOrigins) && payload.lanOrigins.length
+        ? payload.lanOrigins[0]
+        : payload.origin || window.location.origin;
+    state.remote.shareBaseUrl = normalizeBaseUrl(suggested);
+    if (!shareBaseUrlInput.value) {
+      shareBaseUrlInput.value = state.remote.shareBaseUrl;
+    }
+    updateUI();
+  } catch {
+    state.remote.shareBaseUrl = normalizeBaseUrl(window.location.origin);
+    if (!shareBaseUrlInput.value) {
+      shareBaseUrlInput.value = state.remote.shareBaseUrl;
+    }
+  }
+}
+
 function applyRemoteRoomState(payload) {
   state.remote.roomCode = payload.roomCode || state.remote.roomCode;
   state.remote.roomType = payload.roomType || state.remote.roomType;
@@ -1189,6 +1248,7 @@ function resetRemoteState() {
     status: "未连接",
     roomCode: "",
     roomType: "remote",
+    shareBaseUrl: shareBaseUrlInput.value.trim(),
     playerColor: null,
     players: { w: false, b: false },
     error: "",
@@ -1274,7 +1334,18 @@ async function copyInviteLink() {
     updateUI();
     return;
   }
-  const url = new URL(window.location.href);
+  const baseUrl = resolveShareBaseUrl();
+  if (!baseUrl) {
+    state.remote.error = "先填写另一台电脑可访问的地址，例如局域网 IP 或公网地址。";
+    updateUI();
+    return;
+  }
+  if (isLoopbackUrl(baseUrl)) {
+    state.remote.error = "不能分享 localhost / 127.0.0.1，请改成局域网 IP 或公网地址。";
+    updateUI();
+    return;
+  }
+  const url = new URL(baseUrl);
   url.searchParams.set("mode", "remote");
   url.searchParams.set("room", state.remote.roomCode);
   url.searchParams.set("roomType", state.remote.roomType);
@@ -1339,6 +1410,12 @@ difficultySelect.addEventListener("change", (event) => {
   state.difficulty = event.target.value;
   updateUI();
 });
+shareBaseUrlInput.addEventListener("change", () => {
+  const normalized = normalizeBaseUrl(shareBaseUrlInput.value);
+  shareBaseUrlInput.value = normalized || shareBaseUrlInput.value.trim();
+  state.remote.shareBaseUrl = shareBaseUrlInput.value.trim();
+  updateUI();
+});
 modeSelect.addEventListener("change", (event) => {
   if (state.mode === "remote" && event.target.value !== "remote") resetRemoteState();
   state.mode = event.target.value;
@@ -1346,6 +1423,7 @@ modeSelect.addEventListener("change", (event) => {
 });
 canvas.addEventListener("click", handleBoardClick);
 installPromotionHandlers();
+loadServerInfo();
 
 window.render_game_to_text = () => {
   const board = getDisplayedBoard();

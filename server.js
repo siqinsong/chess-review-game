@@ -1,5 +1,6 @@
 const http = require("node:http");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 const { WebSocketServer } = require("ws");
 
@@ -35,6 +36,21 @@ const MIME_TYPES = {
 };
 
 const rooms = new Map();
+
+function getServerOrigins(port) {
+  const interfaces = os.networkInterfaces();
+  const lanOrigins = [];
+  for (const entries of Object.values(interfaces)) {
+    for (const entry of entries || []) {
+      if (entry.family !== "IPv4" || entry.internal) continue;
+      lanOrigins.push(`http://${entry.address}:${port}`);
+    }
+  }
+  return {
+    origin: `http://127.0.0.1:${port}`,
+    lanOrigins: [...new Set(lanOrigins)],
+  };
+}
 
 function deepClone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -569,6 +585,12 @@ function removeClient(ws) {
 
 const server = http.createServer((req, res) => {
   const pathname = req.url === "/" ? "/index.html" : req.url.split("?")[0];
+  if (pathname === "/api/server-info") {
+    const payload = getServerOrigins(PORT);
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+    res.end(JSON.stringify(payload));
+    return;
+  }
   const normalized = path.normalize(pathname).replace(/^(\.\.[/\\])+/, "");
   const resolvedPath = path.join(ROOT, normalized);
   const safePath = resolvedPath.startsWith(ROOT) ? resolvedPath : path.join(ROOT, "index.html");
@@ -602,5 +624,12 @@ wss.on("connection", (ws) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Chess Studio server listening on http://127.0.0.1:${PORT}`);
+  const info = getServerOrigins(PORT);
+  console.log(`Chess Studio server listening on ${info.origin}`);
+  if (info.lanOrigins.length) {
+    console.log("Available on your local network:");
+    for (const origin of info.lanOrigins) {
+      console.log(`  ${origin}`);
+    }
+  }
 });

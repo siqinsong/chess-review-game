@@ -3,7 +3,9 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "playwright": "^1.58.2",
     "ws": "^8.20.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.58.2"
   }
 }
