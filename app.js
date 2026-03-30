@@ -252,6 +252,7 @@ const state = {
     currentId: "",
     title: "",
     description: "",
+    playerColor: "w",
   },
   remote: {
     socket: null,
@@ -396,6 +397,7 @@ function applyPuzzle(puzzle, hasStarted = false) {
     currentId: puzzle.id,
     title: puzzle.title,
     description: puzzle.description,
+    playerColor: puzzle.turn,
   };
   state.game = createPuzzleGame(puzzle);
   state.selected = null;
@@ -409,6 +411,18 @@ function applyPuzzle(puzzle, hasStarted = false) {
 
 function mirrorRow(row) {
   return 7 - row;
+}
+
+function getHumanColor() {
+  if (state.mode === "ai") return "w";
+  if (state.mode === "puzzle") return state.puzzle.playerColor;
+  return null;
+}
+
+function getAiColor() {
+  if (state.mode === "ai") return "b";
+  if (state.mode === "puzzle") return enemy(state.puzzle.playerColor);
+  return null;
 }
 
 function evaluateBoard(board) {
@@ -928,9 +942,9 @@ function recordMove(gameBefore, move, side, choiceData, playedScore, gameAfter) 
     isCheck: gameAfter.reason === "将军",
     resultingStatus: gameAfter.status,
     reviewText:
-      state.mode === "ai" && side === "b"
+      (state.mode === "ai" || state.mode === "puzzle") && side === getAiColor()
         ? `AI 选择 ${moveToNotation(gameBefore, resolvedMove)}，当前难度为${DIFFICULTIES[state.difficulty].label}。`
-        : state.mode === "ai" && side === "w"
+        : (state.mode === "ai" || state.mode === "puzzle") && side === getHumanColor()
           ? `你走出 ${moveToNotation(gameBefore, resolvedMove)}，局面评估从最佳线偏离 ${Math.max(0, swing).toFixed(0)} 分，判定为${classifySwing(swing, side)}。`
           : `${side === "w" ? "白方" : "黑方"}走出 ${moveToNotation(gameBefore, resolvedMove)}，局面评估偏离最佳线 ${Math.max(0, swing).toFixed(0)} 分，判定为${classifySwing(swing, side)}。`,
     snapshot: snapshot(gameAfter),
@@ -938,13 +952,14 @@ function recordMove(gameBefore, move, side, choiceData, playedScore, gameAfter) 
 }
 
 function createMetrics() {
-  const playerMoves = state.game.history.filter((item) => item.side === "w");
-  const aiMoves = state.game.history.filter((item) => item.side === "b");
+  const playerColor = state.mode === "puzzle" ? state.puzzle.playerColor : "w";
+  const playerMoves = state.game.history.filter((item) => item.side === playerColor);
+  const aiMoves = state.game.history.filter((item) => item.side === enemy(playerColor));
   const severe = playerMoves.filter((item) => item.quality === "致命失误").length;
   const inaccuracies = playerMoves.filter((item) => item.quality === "轻微失准").length;
   const mistakes = playerMoves.filter((item) => item.quality === "失误").length;
   const stable = aiMoves.length ? formatEval(aiMoves.at(-1).playedEval) : formatEval(evaluateBoard(state.game.board));
-  const whiteLabel = state.mode === "ai" ? "你的" : "白方";
+  const whiteLabel = state.mode === "ai" || state.mode === "puzzle" ? "你的" : "白方";
   return [
     { label: `${whiteLabel}致命失误`, value: String(severe) },
     { label: `${whiteLabel}失误`, value: String(mistakes + inaccuracies) },
@@ -968,7 +983,8 @@ function updateMetrics() {
 }
 
 function buildReviewSummary() {
-  const playerMoves = state.game.history.filter((item) => item.side === "w");
+  const playerColor = state.mode === "puzzle" ? state.puzzle.playerColor : "w";
+  const playerMoves = state.game.history.filter((item) => item.side === playerColor);
   if (!playerMoves.length) {
     reviewSummary.innerHTML = "<p>还没有形成可复盘数据。</p>";
     return;
@@ -978,7 +994,7 @@ function buildReviewSummary() {
   const biggest = sorted[0];
   const best = [...playerMoves].filter((item) => item.quality === "最佳/近似最佳").length;
   const summary = [];
-  const whiteLabel = state.mode === "ai" ? "你" : "白方";
+  const whiteLabel = state.mode === "ai" || state.mode === "puzzle" ? "你" : "白方";
   summary.push(`<p>${whiteLabel}的 ${playerMoves.length} 步里有 ${best} 步保持在最佳线附近。</p>`);
   if (biggest) {
     summary.push(
@@ -1031,7 +1047,7 @@ function describeStatus() {
   if (game.status === "stalemate") return "和棋：逼和";
   if (game.status === "draw") return `和棋：${game.reason}`;
   if (state.aiThinking) return "AI 思考中";
-  if (state.mode === "puzzle") return `${currentSideLabel()}续下`;
+  if (state.mode === "puzzle") return state.game.turn === state.puzzle.playerColor ? "轮到你续下" : "AI 行棋";
   return state.mode === "ai" && game.turn === "b" ? "AI 行棋" : `${currentSideLabel()}行棋`;
 }
 
@@ -1068,13 +1084,13 @@ function updateInsightText() {
         : state.mode === "local"
           ? "当前是双人模式。点击“开始游戏”后，双方轮流在同一棋盘上点击走子，系统同样会记录并复盘每一步。"
           : state.mode === "puzzle"
-            ? `当前是 Puzzle 续下模式。题面「${state.puzzle.title}」已加载：${state.puzzle.description}`
+            ? `当前是 Puzzle 续下模式。题面「${state.puzzle.title}」已加载：${state.puzzle.description} 你将接手${state.puzzle.playerColor === "w" ? "白方" : "黑方"}，AI 负责另一方，当前难度为${DIFFICULTIES[state.difficulty].label}。`
           : "当前是远程联机模式。你可以创建远程双人房，或者直接创建远程人机房，在另一台设备上继续和 AI 对战。";
     return;
   }
   insightText.textContent =
     state.mode === "puzzle"
-      ? `正在续下题面「${state.puzzle.title}」。${state.puzzle.description}`
+      ? `正在续下题面「${state.puzzle.title}」。${state.puzzle.description} 你执${state.puzzle.playerColor === "w" ? "白" : "黑"}，AI 执${state.puzzle.playerColor === "w" ? "黑" : "白"}。`
       : "选择白方棋子开始对局。系统会在你每一步之后自动记录最佳着法与分数波动，赛后生成复盘结论。";
 }
 
@@ -1090,7 +1106,7 @@ function updateUI() {
       : state.mode === "local"
         ? "对局已开始，白黑双方轮流点击走子"
         : state.mode === "puzzle"
-          ? `续下中：${state.puzzle.title}`
+          ? `续下中：${state.puzzle.title} · 你执${state.puzzle.playerColor === "w" ? "白" : "黑"}`
         : "联机对局已开始，双方共享同一棋盘与复盘"
     : state.mode === "remote"
       ? state.remote.roomType === "remote-ai"
@@ -1124,7 +1140,7 @@ function updateUI() {
   guidePanel.style.display = state.hasStarted || state.mode === "remote" ? "none" : "block";
   remotePanel.style.display = state.mode === "remote" ? "block" : "none";
   difficultySelect.disabled =
-    state.mode === "local" || state.mode === "puzzle" || (state.mode === "remote" && Boolean(state.remote.roomCode));
+    state.mode === "local" || (state.mode === "remote" && Boolean(state.remote.roomCode));
   undoBtn.disabled = state.mode === "remote";
   remoteStatusText.textContent = state.remote.status;
   remoteRoleText.textContent =
@@ -1238,7 +1254,7 @@ async function executeMove(move, side, choiceDataOverride = null, skipAi = false
   const gameBefore = cloneGame(state.game);
   let resolvedMove = { ...move };
   if (move.promotionNeeded && !move.promotion) {
-    if (side === "w") {
+    if (side === getHumanColor()) {
       const promotion = await choosePromotion(move);
       resolvedMove = { ...move, promotion };
     } else {
@@ -1272,13 +1288,14 @@ async function executeMove(move, side, choiceDataOverride = null, skipAi = false
     });
   }
 
-  if (!skipAi && state.mode === "ai" && next.status === "playing" && next.turn === "b") {
+  if (!skipAi && (state.mode === "ai" || state.mode === "puzzle") && next.status === "playing" && next.turn === getAiColor()) {
     window.setTimeout(playAiTurn, 140);
   }
 }
 
 async function playAiTurn() {
-  if (!state.hasStarted || state.mode !== "ai" || state.aiThinking || state.game.turn !== "b" || state.game.status !== "playing") return;
+  const aiColor = getAiColor();
+  if (!state.hasStarted || !aiColor || state.aiThinking || state.game.turn !== aiColor || state.game.status !== "playing") return;
   state.aiThinking = true;
   updateUI();
   const config = DIFFICULTIES[state.difficulty];
@@ -1288,14 +1305,14 @@ async function playAiTurn() {
     updateUI();
     return;
   }
-  await executeMove(choice.move, "b", choice, true);
+  await executeMove(choice.move, aiColor, choice, true);
 }
 
 async function handleBoardClick(event) {
   if (state.reviewIndex !== null || !state.hasStarted || state.aiThinking || state.game.status !== "playing") {
     return;
   }
-  if (state.mode === "ai" && state.game.turn !== "w") {
+  if ((state.mode === "ai" || state.mode === "puzzle") && state.game.turn !== getHumanColor()) {
     return;
   }
   if (state.mode === "remote" && state.remote.playerColor !== state.game.turn) {
@@ -1340,6 +1357,7 @@ function resetGame() {
     currentId: "",
     title: "",
     description: "",
+    playerColor: "w",
   };
   updateUI();
 }
@@ -1606,7 +1624,16 @@ function installPromotionHandlers() {
 restartBtn.addEventListener("click", resetGame);
 undoBtn.addEventListener("click", () => {
   if (!state.game.history.length || state.aiThinking) return;
-  const rollback = state.mode === "local" || state.mode === "puzzle" ? 1 : state.game.turn === "b" ? 1 : 2;
+  const rollback =
+    state.mode === "local"
+      ? 1
+      : state.mode === "puzzle"
+        ? state.game.turn === getAiColor()
+          ? 1
+          : 2
+        : state.game.turn === "b"
+          ? 1
+          : 2;
   const history = state.game.history.slice(0, Math.max(0, state.game.history.length - rollback));
   restoreSnapshot(history);
   state.reviewIndex = null;
