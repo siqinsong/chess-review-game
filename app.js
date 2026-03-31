@@ -6,7 +6,7 @@ const restartBtn = document.getElementById("restart-btn");
 const undoBtn = document.getElementById("undo-btn");
 const resumeLiveBtn = document.getElementById("resume-live-btn");
 const startBtn = document.getElementById("start-btn");
-const nextPuzzleBtn = document.getElementById("next-puzzle-btn");
+const selectPuzzleBtn = document.getElementById("select-puzzle-btn");
 const starterText = document.getElementById("starter-text");
 const remotePanel = document.getElementById("remote-panel");
 const remoteStatusText = document.getElementById("remote-status-text");
@@ -28,6 +28,12 @@ const moveList = document.getElementById("move-list");
 const reviewSummary = document.getElementById("review-summary");
 const promotionModal = document.getElementById("promotion-modal");
 const guidePanel = document.getElementById("guide-panel");
+const puzzleSelectModal = document.getElementById("puzzle-select-modal");
+const puzzleModalClose = document.getElementById("puzzle-modal-close");
+const puzzleGrid = document.getElementById("puzzle-grid");
+const puzzleEmpty = document.getElementById("puzzle-empty");
+const difficultyFilterEl = document.getElementById("difficulty-filter");
+const themeFilterEl = document.getElementById("theme-filter");
 
 const FILES = "abcdefgh";
 const PIECE_VALUES = { p: 100, n: 320, b: 335, r: 500, q: 900, k: 0 };
@@ -115,128 +121,9 @@ const DIFFICULTIES = {
   expert: { label: "高级", depth: 3, noise: 0, reviewDepth: 2 },
 };
 
-const PUZZLES = [
-  {
-    id: "italian-initiative",
-    title: "意大利开局的先手主动权",
-    description: "白方先走。王都已安置好，适合从轻子活跃度和中央张力继续推演。",
-    board: [
-      ["br", null, "bb", "bq", null, "br", "bk", null],
-      ["bp", "bp", null, null, "bb", "bp", "bp", "bp"],
-      [null, null, "bn", "bp", null, "bn", null, null],
-      [null, null, "bp", null, "wp", null, null, null],
-      [null, null, "wb", null, null, null, null, null],
-      [null, null, "wn", null, null, "wn", null, null],
-      ["wp", "wp", "wp", null, "wq", "wp", "wp", "wp"],
-      ["wr", null, null, null, "wr", null, "wk", null],
-    ],
-    turn: "w",
-    castling: { w: { kingSide: false, queenSide: false }, b: { kingSide: false, queenSide: false } },
-    enPassant: null,
-    halfmove: 2,
-    fullmove: 11,
-  },
-  {
-    id: "minor-piece-squeeze",
-    title: "双马与象的空间压制",
-    description: "黑方先走。双方子力完整度较高，适合练习如何在拥挤局面中找出突破点。",
-    board: [
-      ["br", null, null, "bq", null, "br", "bk", null],
-      ["bp", "bp", null, "bb", null, "bp", "bp", "bp"],
-      [null, null, "bp", "bp", "bn", "bn", null, null],
-      [null, null, null, null, "bp", null, null, null],
-      [null, null, "wp", "wp", "wp", null, null, null],
-      [null, null, "wn", "wb", null, "wn", null, null],
-      ["wp", "wp", null, null, "wq", "wp", "wp", "wp"],
-      ["wr", null, null, null, "wr", null, "wk", null],
-    ],
-    turn: "b",
-    castling: { w: { kingSide: false, queenSide: false }, b: { kingSide: false, queenSide: false } },
-    enPassant: null,
-    halfmove: 0,
-    fullmove: 18,
-  },
-  {
-    id: "queen-endgame-race",
-    title: "后残局抢先手",
-    description: "白方先走。双方都保留一枚后和若干兵，适合练习将军、兑后与通路兵竞速。",
-    board: [
-      [null, null, null, null, null, null, "bk", null],
-      [null, null, null, null, null, "bp", null, "bp"],
-      [null, null, null, null, "bp", null, "bp", null],
-      [null, null, null, "bp", null, null, null, null],
-      [null, null, "wp", null, "wp", null, null, null],
-      [null, null, null, null, null, "wp", "wp", null],
-      [null, null, null, "wq", null, null, null, "wp"],
-      [null, null, null, null, null, null, "wk", null],
-    ],
-    turn: "w",
-    castling: { w: { kingSide: false, queenSide: false }, b: { kingSide: false, queenSide: false } },
-    enPassant: null,
-    halfmove: 1,
-    fullmove: 35,
-  },
-  {
-    id: "rook-endgame-active-king",
-    title: "车残局中的王的激活",
-    description: "黑方先走。双方各有一车，关键在于王的站位和兵形弱点的利用。",
-    board: [
-      [null, null, null, null, null, null, null, null],
-      [null, null, null, null, "br", null, "bk", null],
-      [null, null, null, "bp", null, "bp", null, "bp"],
-      [null, null, null, null, "bp", null, "bp", null],
-      [null, null, null, "wp", null, null, null, null],
-      [null, null, null, null, "wk", "wp", null, "wp"],
-      [null, null, null, null, "wr", null, null, null],
-      [null, null, null, null, null, null, null, null],
-    ],
-    turn: "b",
-    castling: { w: { kingSide: false, queenSide: false }, b: { kingSide: false, queenSide: false } },
-    enPassant: null,
-    halfmove: 4,
-    fullmove: 42,
-  },
-  {
-    id: "passed-pawn-race",
-    title: "通路兵竞速",
-    description: "白方先走。残局兵形非常直接，适合练习计算谁先升变以及何时该用王拦截。",
-    board: [
-      [null, null, null, null, null, null, null, null],
-      [null, null, null, null, null, null, "bk", null],
-      [null, null, null, null, null, "bp", null, null],
-      [null, null, null, null, "bp", null, null, null],
-      [null, null, null, "wp", null, null, null, null],
-      [null, null, null, null, null, null, "wk", null],
-      [null, null, null, null, null, null, null, "wp"],
-      [null, null, null, null, null, null, null, null],
-    ],
-    turn: "w",
-    castling: { w: { kingSide: false, queenSide: false }, b: { kingSide: false, queenSide: false } },
-    enPassant: null,
-    halfmove: 0,
-    fullmove: 51,
-  },
-  {
-    id: "opposite-colored-bishops",
-    title: "异色象残局",
-    description: "黑方先走。异色象让和棋资源很多，但也容易漏看兵翼的切入点。",
-    board: [
-      [null, null, null, null, null, null, null, null],
-      [null, null, null, null, null, "bk", null, null],
-      [null, null, null, "bp", null, null, null, null],
-      [null, null, null, null, "bb", null, "bp", null],
-      [null, null, "wb", null, null, null, null, null],
-      [null, null, null, "wp", null, "wk", null, null],
-      [null, null, null, null, null, null, "wp", null],
-      [null, null, null, null, null, null, null, null],
-    ],
-    turn: "b",
-    castling: { w: { kingSide: false, queenSide: false }, b: { kingSide: false, queenSide: false } },
-    enPassant: null,
-    halfmove: 7,
-    fullmove: 46,
-  },
-];
+// PUZZLES is provided as a global variable by puzzles.js (loaded before app.js in index.html)
+
+const puzzleFilter = { difficulty: "", theme: "" };
 
 const state = {
   game: null,
@@ -390,6 +277,62 @@ function pickRandomPuzzle(excludeId = "") {
   const pool = PUZZLES.filter((item) => item.id !== excludeId);
   const source = pool.length ? pool : PUZZLES;
   return source[Math.floor(Math.random() * source.length)];
+}
+
+function openPuzzleModal() {
+  renderPuzzleGrid();
+  puzzleSelectModal.classList.remove("hidden");
+  puzzleSelectModal.setAttribute("aria-hidden", "false");
+}
+
+function closePuzzleModal() {
+  puzzleSelectModal.classList.add("hidden");
+  puzzleSelectModal.setAttribute("aria-hidden", "true");
+}
+
+function renderPuzzleGrid() {
+  const filtered = PUZZLES.filter((p) => {
+    const diffOk = !puzzleFilter.difficulty || p.difficulty === puzzleFilter.difficulty;
+    const themeOk = !puzzleFilter.theme || p.theme === puzzleFilter.theme;
+    return diffOk && themeOk;
+  });
+
+  if (filtered.length === 0) {
+    puzzleGrid.innerHTML = "";
+    puzzleEmpty.classList.remove("hidden");
+    return;
+  }
+  puzzleEmpty.classList.add("hidden");
+
+  const diffLabels = { beginner: "初级", intermediate: "中级", expert: "高级" };
+  const themeLabels = { endgame: "残局", middlegame: "中局", tactic: "战术", opening: "开局" };
+  const currentId = state.puzzle?.currentId ?? "";
+
+  puzzleGrid.innerHTML = filtered
+    .map(
+      (p) => `
+    <button class="puzzle-card${p.id === currentId ? " current" : ""}" data-id="${p.id}">
+      <span class="puzzle-card-title">${p.title}</span>
+      <span class="puzzle-card-meta">${themeLabels[p.theme] ?? p.theme} · ${diffLabels[p.difficulty] ?? p.difficulty}</span>
+    </button>`,
+    )
+    .join("");
+
+  puzzleGrid.querySelectorAll(".puzzle-card").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const puzzle = PUZZLES.find((p) => p.id === btn.dataset.id);
+      if (puzzle) {
+        applyPuzzle(puzzle, false);
+        closePuzzleModal();
+      }
+    });
+  });
+}
+
+function setPill(container, value) {
+  container.querySelectorAll(".pill").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.value === value);
+  });
 }
 
 function applyPuzzle(puzzle, hasStarted = false) {
@@ -1127,8 +1070,8 @@ function updateUI() {
       : state.hasStarted
         ? "重新开始当前模式"
         : "开始游戏";
-  nextPuzzleBtn.style.display = state.mode === "puzzle" ? "inline-flex" : "none";
-  nextPuzzleBtn.disabled = state.mode !== "puzzle";
+  selectPuzzleBtn.style.display = state.mode === "puzzle" ? "inline-flex" : "none";
+  selectPuzzleBtn.disabled = state.mode !== "puzzle";
   startBtn.disabled =
     state.mode === "remote" &&
     (
@@ -1642,10 +1585,30 @@ undoBtn.addEventListener("click", () => {
   updateUI();
 });
 startBtn.addEventListener("click", startGame);
-nextPuzzleBtn.addEventListener("click", () => {
-  if (state.mode !== "puzzle") return;
-  applyPuzzle(pickRandomPuzzle(state.puzzle.currentId), state.hasStarted);
+selectPuzzleBtn.addEventListener("click", openPuzzleModal);
+
+puzzleModalClose.addEventListener("click", closePuzzleModal);
+
+puzzleSelectModal.addEventListener("click", (e) => {
+  if (e.target === puzzleSelectModal) closePuzzleModal();
 });
+
+difficultyFilterEl.addEventListener("click", (e) => {
+  const pill = e.target.closest(".pill");
+  if (!pill) return;
+  puzzleFilter.difficulty = pill.dataset.value;
+  setPill(difficultyFilterEl, puzzleFilter.difficulty);
+  renderPuzzleGrid();
+});
+
+themeFilterEl.addEventListener("click", (e) => {
+  const pill = e.target.closest(".pill");
+  if (!pill) return;
+  puzzleFilter.theme = pill.dataset.value;
+  setPill(themeFilterEl, puzzleFilter.theme);
+  renderPuzzleGrid();
+});
+
 createRoomBtn.addEventListener("click", createRoom);
 joinRoomBtn.addEventListener("click", joinRoom);
 copyRoomBtn.addEventListener("click", copyInviteLink);
