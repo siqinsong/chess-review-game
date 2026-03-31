@@ -465,3 +465,169 @@ canvas {
     width: 100%;
   }
 }
+
+/* ── Puzzle Select Modal ─────────────────────────────── */
+.puzzle-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(29, 36, 48, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  backdrop-filter: blur(4px);
+}
+
+.puzzle-modal.hidden {
+  display: none;
+}
+
+.puzzle-modal-card {
+  background: var(--panel-strong);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  width: min(680px, calc(100vw - 32px));
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.puzzle-modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 12px;
+  border-bottom: 1px solid rgba(188, 138, 66, 0.18);
+}
+
+.puzzle-modal-head h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+
+.puzzle-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: var(--muted);
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.puzzle-modal-close:hover {
+  background: rgba(188, 138, 66, 0.12);
+  color: var(--ink);
+}
+
+/* ── Filters ─────────────────────────────────────────── */
+.puzzle-filters {
+  padding: 14px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: 1px solid rgba(188, 138, 66, 0.12);
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filter-label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  min-width: 32px;
+  letter-spacing: 0.04em;
+}
+
+.filter-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  padding: 4px 12px;
+  border-radius: 99px;
+  border: 1.5px solid rgba(188, 138, 66, 0.3);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pill:hover {
+  border-color: var(--gold);
+  color: var(--ink);
+}
+
+.pill.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ── Puzzle Grid ─────────────────────────────────────── */
+.puzzle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  padding: 16px 24px 20px;
+  overflow-y: auto;
+}
+
+.puzzle-card {
+  background: var(--panel);
+  border: 1.5px solid rgba(188, 138, 66, 0.2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.puzzle-card:hover {
+  border-color: var(--gold);
+  background: var(--panel-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(188, 138, 66, 0.15);
+}
+
+.puzzle-card.current {
+  border-color: var(--accent);
+  background: rgba(29, 107, 88, 0.08);
+}
+
+.puzzle-card-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.puzzle-card-meta {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.puzzle-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.puzzle-empty.hidden {
+  display: none;
+}
