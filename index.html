@@ -84,7 +84,7 @@
               <strong id="starter-text">点击“开始游戏”后落子</strong>
             </div>
             <div class="starter-actions">
-              <button id="next-puzzle-btn" class="ghost">换一题</button>
+              <button id="select-puzzle-btn" class="ghost">选题</button>
               <button id="start-btn">开始游戏</button>
             </div>
           </div>
@@ -157,6 +157,39 @@
       </div>
     </div>
 
+    <div id="puzzle-select-modal" class="puzzle-modal hidden" aria-hidden="true">
+      <div class="puzzle-modal-card">
+        <div class="puzzle-modal-head">
+          <h3>选择题目</h3>
+          <button id="puzzle-modal-close" class="puzzle-modal-close" aria-label="关闭">×</button>
+        </div>
+        <div class="puzzle-filters">
+          <div class="filter-row">
+            <span class="filter-label">难度</span>
+            <div class="filter-pills" id="difficulty-filter">
+              <button class="pill active" data-value="">全部</button>
+              <button class="pill" data-value="beginner">初级</button>
+              <button class="pill" data-value="intermediate">中级</button>
+              <button class="pill" data-value="expert">高级</button>
+            </div>
+          </div>
+          <div class="filter-row">
+            <span class="filter-label">主题</span>
+            <div class="filter-pills" id="theme-filter">
+              <button class="pill active" data-value="">全部</button>
+              <button class="pill" data-value="endgame">残局</button>
+              <button class="pill" data-value="middlegame">中局</button>
+              <button class="pill" data-value="tactic">战术</button>
+              <button class="pill" data-value="opening">开局</button>
+            </div>
+          </div>
+        </div>
+        <div id="puzzle-grid" class="puzzle-grid"></div>
+        <p id="puzzle-empty" class="puzzle-empty hidden">暂无符合条件的题目</p>
+      </div>
+    </div>
+
+    <script src="./puzzles.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>
